@@ -25,7 +25,18 @@
   const state = {filter:'All',sort:'rank',query:'',rankMode:'editorial',saved:new Set(getStored('form-saved-v1',[])),compare:[],toastTimer:null};
   const voting = window.FORM_VOTING;
   const lookup = slug => studies.find(d => d.slug === slug);
-  const route = () => decodeURIComponent(location.hash.slice(1) || '/');
+  const cleanPath = path => (path.replace(/\/+$/,'') || '/');
+  const legacyPath = location.hash.startsWith('#/') ? location.hash.slice(1) : null;
+  const initialPath = cleanPath(legacyPath || location.pathname);
+  if(legacyPath || location.pathname !== initialPath){
+    history.replaceState(history.state,'',initialPath + location.search);
+  }
+  const route = () => cleanPath(location.pathname);
+  function navigate(path){
+    const next=cleanPath(path);
+    if(route()!==next)history.pushState({},'',next);
+    render();
+  }
   const saveFavorites = () => { try { localStorage.setItem('form-saved-v1',JSON.stringify([...state.saved])); } catch {} };
 
   const svgText = (x,y,str,size,fill,weight=500,extra='') => `<text x="${x}" y="${y}" font-size="${size}" fill="${fill}" font-weight="${weight}" ${extra}>${esc(str)}</text>`;
@@ -50,7 +61,7 @@
       case 'landscape': return `<path d="M0 226L98 117 156 181 244 75 400 228Z" fill="${c}" opacity=".22"/><path d="M115 226L242 80 400 211V226Z" fill="${a}" opacity=".35"/><path d="M225 131L244 80 269 138" fill="none" stroke="${c}" stroke-width="2"/>${serif(26,139,'Beyond',45,f)}${serif(26,178,'the ordinary.',34,f)}`;
       case 'soft': return `<ellipse cx="307" cy="127" rx="86" ry="74" fill="${c}" opacity=".7"/><ellipse cx="328" cy="150" rx="51" ry="53" fill="${a}" opacity=".18"/>${heavy(29,181,'5',122,a)}${svgText(155,131,'The moments',22,f,600)}${svgText(157,155,'that matter.',22,f,600)}`;
       case 'tiles': return `${rect(26,67,156,154,a,15,'opacity=".9"')}${heavy(42,160,'05',78,'#fff')}${svgText(43,188,'CHAMPIONSHIPS',11,'#fff',700,'letter-spacing="1"')}${rect(195,67,179,70,c,13,'opacity=".55"')}${rect(195,148,179,73,a,13,'opacity=".15"')}${heavy(212,111,'11',35,f)}${svgText(269,111,'SEASONS',12,f)}${svgText(212,189,'2013—2023',20,f,600)}`;
-case 'route': return `${heavy(27,113,'THE ROAD',36,f,'letter-spacing="-1.3"')}${svgText(29,141,'TO GREATNESS',16,f,500,'letter-spacing="1.7"')}<path d="M34 207H105Q118 207 118 194V175Q118 162 131 162H226Q239 162 239 175V194Q239 207 252 207H364" fill="none" stroke="${a}" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="34" cy="207" r="7" fill="${f}" stroke="${d.bg}" stroke-width="3"/><circle cx="178" cy="162" r="4" fill="${d.bg}" stroke="${a}" stroke-width="2"/><circle cx="364" cy="207" r="9" fill="${f}" stroke="${d.bg}" stroke-width="3"/>`;
+      case 'route': return `${heavy(27,113,'THE ROAD',36,f,'letter-spacing="-1.3"')}${svgText(29,141,'TO GREATNESS',16,f,500,'letter-spacing="1.7"')}<path d="M34 207H105Q118 207 118 194V175Q118 162 131 162H226Q239 162 239 175V194Q239 207 252 207H364" fill="none" stroke="${a}" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="34" cy="207" r="7" fill="${f}" stroke="${d.bg}" stroke-width="3"/><circle cx="178" cy="162" r="4" fill="${d.bg}" stroke="${a}" stroke-width="2"/><circle cx="364" cy="207" r="9" fill="${f}" stroke="${d.bg}" stroke-width="3"/>`;
       case 'cinema': return `<defs><linearGradient id="cin${d.rank}" x1="0" x2="1"><stop stop-color="${a}" stop-opacity=".3"/><stop offset="1" stop-color="${d.bg}" stop-opacity="0"/></linearGradient></defs><path d="M205 51L400 53 400 220 140 220Z" fill="url(#cin${d.rank})"/>${rect(26,74,4,121,a)}${heavy(44,140,'THE ERA',35,f,'letter-spacing="-1"')}${heavy(44,182,'OF FIVE.',38,f,'letter-spacing="-1"')}${svgText(46,212,'2013 / 2015 / 2017 / 2019 / 2020',11,c)}`;
       case 'orbit': return `<ellipse cx="284" cy="139" rx="102" ry="49" fill="none" stroke="${a}" stroke-width="1.5" transform="rotate(-34 284 139)"/><ellipse cx="284" cy="139" rx="99" ry="49" fill="none" stroke="${f}" stroke-width=".7" opacity=".36" transform="rotate(35 284 139)"/><circle cx="285" cy="138" r="35" fill="${a}" opacity=".22"/><circle cx="355" cy="97" r="7" fill="${a}"/>${heavy(27,139,'05',81,f)}${svgText(28,164,'MISSIONS WON',12,f,600,'letter-spacing="1.5"')}`;
       case 'google': return `${[['#4285F4',275,108,45],['#EA4335',323,91,22],['#FBBC05',328,157,29],['#34A853',262,169,23]].map(e=>`<circle cx="${e[1]}" cy="${e[2]}" r="${e[3]}" fill="${e[0]}" opacity=".84"/>`).join('')}${heavy(24,159,'5',113,f)}${svgText(24,185,'championships.',17,f,500)}`;
@@ -74,11 +85,11 @@ case 'route': return `${heavy(27,113,'THE ROAD',36,f,'letter-spacing="-1.3"')}${
     return `<svg class="visual-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" role="img" aria-label="${esc(d.name)} inspired Mumbai Indians championship design" preserveAspectRatio="xMidYMid meet"><title>${esc(d.name)} design study</title>${sub}<rect width="400" height="300" fill="${d.bg}"/>${svgText(25,35,d.name.toUpperCase(),14,d.fg,700,'letter-spacing="1.3"')}${svgText(375,35,'FORM / MI',9,d.fg,500,'letter-spacing="1.5" text-anchor="end" opacity=".48"')}${line(25,47,375,47,d.fg,.7,.14)}${composition(d)}${line(27,253,373,253,d.fg,1,.22)}${markers}${svgText(25,282,'2008',10,footer,500,'opacity=".62"')}${svgText(375,282,'2026',10,footer,500,'text-anchor="end" opacity=".62"')}${svgText(200,282,'FIVE CHAMPIONSHIP YEARS',9,footer,600,'text-anchor="middle" letter-spacing="1" opacity=".62"')}</svg>`;
   }
 
-  const navLink=(label,path,active,count='')=>`<a href="#${path}" class="nav-link ${active?'active':''}" ${active?'aria-current="page"':''}>${label}${count?` <span class="tiny-count">${count}</span>`:''}</a>`;
+  const navLink=(label,path,active,count='')=>`<a href="${path}" class="nav-link ${active?'active':''}" ${active?'aria-current="page"':''}>${label}${count?` <span class="tiny-count">${count}</span>`:''}</a>`;
   function chrome(main, current) {
     const explore=current==='/'||current==='/collection'||current.startsWith('/design/');
     const compareCount=state.compare.length;
-    return `<header class="site-header"><div class="header-inner"><a href="#/" class="brand" aria-label="FORM home">form<i>.</i></a><nav class="primary-nav" aria-label="Main navigation">${navLink('Explore','/collection',explore)}${navLink('Rankings','/rankings',current==='/rankings')}${navLink('Saved','/saved',current==='/saved',state.saved.size)}${navLink('Compare','/compare',current==='/compare',compareCount)}</nav><div class="header-actions"><button class="icon-btn" data-focus-search aria-label="Search designs" title="Search designs">${svgIcon('search')}</button><button class="icon-btn" data-route="/compare" aria-label="Compare selected designs" title="Compare">${svgIcon('compare')}</button></div></div><div class="top-progress" aria-hidden="true"></div></header><main id="main">${main}</main><footer class="site-footer"><div class="wrap footer-inner"><div><div class="footer-brand">form.</div><div class="footer-copy">An independent design exploration. Brand-inspired interpretations, not official brand products or affiliations. Editorial ratings are subjective.</div></div><div class="footer-end"><div class="footer-kicker">ONE STORY. 37 PERSPECTIVES.</div><div class="footer-credit">A project by <a href="https://www.linkedin.com/in/prakharindoria/" target="_blank" rel="noopener noreferrer" aria-label="Prakhar Indoria on LinkedIn (opens in a new tab)">Prakhar Indoria <span aria-hidden="true">↗</span></a></div><div class="footer-made">Made with <span class="footer-heart" aria-label="love">♥</span> in India</div><div class="footer-copyright">© ${new Date().getFullYear()} FORM</div></div></div></footer><nav class="mobile-nav" aria-label="Mobile navigation"><a href="#/collection" class="${explore?'active':''}">${svgIcon('grid')}Explore</a><a href="#/rankings" class="${current==='/rankings'?'active':''}">${svgIcon('rank')}Rankings</a><a href="#/saved" class="${current==='/saved'?'active':''}">${svgIcon('bookmark')}Saved</a><a href="#/compare" class="${current==='/compare'?'active':''}">${svgIcon('compare')}Compare</a></nav>${dock()}`;
+    return `<header class="site-header"><div class="header-inner"><a href="/" class="brand" aria-label="FORM home">form<i>.</i></a><nav class="primary-nav" aria-label="Main navigation">${navLink('Explore','/collection',explore)}${navLink('Rankings','/rankings',current==='/rankings')}${navLink('Saved','/saved',current==='/saved',state.saved.size)}${navLink('Compare','/compare',current==='/compare',compareCount)}</nav><div class="header-actions"><button class="icon-btn" data-focus-search aria-label="Search designs" title="Search designs">${svgIcon('search')}</button><button class="icon-btn" data-route="/compare" aria-label="Compare selected designs" title="Compare">${svgIcon('compare')}</button></div></div><div class="top-progress" aria-hidden="true"></div></header><main id="main">${main}</main><footer class="site-footer"><div class="wrap footer-inner"><div><div class="footer-brand">form.</div><div class="footer-copy">An independent design exploration. Brand-inspired interpretations, not official brand products or affiliations. Editorial ratings are subjective.</div></div><div class="footer-end"><div class="footer-kicker">ONE STORY. 37 PERSPECTIVES.</div><div class="footer-credit">A project by <a href="https://www.linkedin.com/in/prakharindoria/" target="_blank" rel="noopener noreferrer" aria-label="Prakhar Indoria on LinkedIn (opens in a new tab)">Prakhar Indoria <span aria-hidden="true">↗</span></a></div><div class="footer-made">Made with <span class="footer-heart" aria-label="love">♥</span> in India</div><div class="footer-copyright">© ${new Date().getFullYear()} FORM</div></div></div></footer><nav class="mobile-nav" aria-label="Mobile navigation"><a href="/collection" class="${explore?'active':''}">${svgIcon('grid')}Explore</a><a href="/rankings" class="${current==='/rankings'?'active':''}">${svgIcon('rank')}Rankings</a><a href="/saved" class="${current==='/saved'?'active':''}">${svgIcon('bookmark')}Saved</a><a href="/compare" class="${current==='/compare'?'active':''}">${svgIcon('compare')}Compare</a></nav>${dock()}`;
   }
 
   function dock(){
@@ -136,10 +147,11 @@ case 'route': return `${heavy(27,113,'THE ROAD',36,f,'letter-spacing="-1.3"')}${
   }
 
   function home(){
-    return `<section class="hero wrap"><div class="hero-copy"><div class="eyebrow">A CURATED EXPERIMENT IN DESIGN</div><h1>One story.<br><em>37 perspectives.</em></h1><p class="hero-text">What happens when the same story is told through 37 different design philosophies? A living collection of form, feeling and function.</p><div class="hero-actions"><a href="#/collection" class="solid-btn">Explore the collection ${svgIcon('arrow')}</a><a href="#/rankings" class="outline-btn">See the rankings</a></div></div>${featuredMarkup()}</section><div class="wrap stats-ribbon"><div class="stats-left"><div class="metric"><strong>37</strong><span>design languages</span></div><div class="metric"><strong>01</strong><span>shared narrative</span></div><div class="metric"><strong>∞</strong><span>ways to see</span></div></div><div class="stats-caption">A side-by-side exploration of the decisions that make design feel different.</div></div>${collectionSection()}<section class="interlude"><div class="wrap interlude-inner"><div><div class="eyebrow">WHAT STAYS THE SAME</div><p>Mumbai Indians. Nineteen IPL seasons. Five championships. One story that every design interprets differently.</p></div><h2>Same facts.<br><em>Different feeling.</em></h2></div></section>`;
+    return `<section class="hero wrap"><div class="hero-copy"><div class="eyebrow">A CURATED EXPERIMENT IN DESIGN</div><h1>One story.<br><em>37 perspectives.</em></h1><p class="hero-text">What happens when the same story is told through 37 different design philosophies? A living collection of form, feeling and function.</p><div class="hero-actions"><a href="/collection" class="solid-btn">Explore the collection ${svgIcon('arrow')}</a><a href="/rankings" class="outline-btn">See the rankings</a></div></div>${featuredMarkup()}</section><div class="wrap stats-ribbon"><div class="stats-left"><div class="metric"><strong>37</strong><span>design languages</span></div><div class="metric"><strong>01</strong><span>shared narrative</span></div><div class="metric"><strong>∞</strong><span>ways to see</span></div></div><div class="stats-caption">A side-by-side exploration of the decisions that make design feel different.</div></div>${collectionSection()}<section class="interlude"><div class="wrap interlude-inner"><div><div class="eyebrow">WHAT STAYS THE SAME</div><p>Mumbai Indians. Nineteen IPL seasons. Five championships. One story that every design interprets differently.</p></div><h2>Same facts.<br><em>Different feeling.</em></h2></div></section>`;
   }
+
   function collectionPage(savedOnly=false){
-    if(savedOnly){ const saved=studies.filter(d=>state.saved.has(d.slug));return `<div class="subpage wrap"><div class="eyebrow">YOUR PERSONAL SELECTION</div><h1 class="subpage-title">Worth keeping<span style="color:#84917d">.</span></h1><p class="subpage-intro">Designs you have bookmarked, saved locally on this browser. Your collection stays with you when you return.</p><div class="gallery">${saved.length?cards(saved):`<div class="empty-state"><div class="empty-glyph">♡</div><h3>Your collection starts here.</h3><p>Save any design you love and it will appear here.</p><a class="solid-btn" href="#/collection">Explore designs</a></div>`}</div></div>`}
+    if(savedOnly){ const saved=studies.filter(d=>state.saved.has(d.slug));return `<div class="subpage wrap"><div class="eyebrow">YOUR PERSONAL SELECTION</div><h1 class="subpage-title">Worth keeping<span style="color:#84917d">.</span></h1><p class="subpage-intro">Designs you have bookmarked, saved locally on this browser. Your collection stays with you when you return.</p><div class="gallery">${saved.length?cards(saved):`<div class="empty-state"><div class="empty-glyph">♡</div><h3>Your collection starts here.</h3><p>Save any design you love and it will appear here.</p><a class="solid-btn" href="/collection">Explore designs</a></div>`}</div></div>`}
     return `<div class="subpage wrap" style="padding-bottom:0"><div class="eyebrow">THE DESIGN INDEX</div><h1 class="subpage-title">The collection<span style="color:#84917d">.</span></h1><p class="subpage-intro">Thirty-seven perspectives on one shared story. Find a favourite, discover a new visual language, or compare two side by side.</p></div>${collectionSection()}`;
   }
 
@@ -159,7 +171,7 @@ case 'route': return `${heavy(27,113,'THE ROAD',36,f,'letter-spacing="-1.3"')}${
 
   function compare(){
     const selected=state.compare.map(lookup).filter(Boolean);
-    return `<section class="subpage wrap"><div class="eyebrow">YOUR DESIGN WORKSPACE</div><h1 class="subpage-title">Side by side<span style="color:#8c9889">.</span></h1><p class="subpage-intro">The same facts, two different philosophies. Put them next to each other to see what changes — and what doesn't.</p><div class="compare-picks">${[0,1].map(i=>selected[i]?`<article class="compare-card"><div class="compare-caption"><h2>${esc(selected[i].name)}</h2><span>${selected[i].score} / 100</span></div>${art(selected[i])}<div class="compare-foot">${voting.button(selected[i],'detail')}<button class="outline-btn" data-remove-compare="${selected[i].slug}">${svgIcon('close')} Remove</button></div></article>`:`<div class="compare-select"><div style="font-size:45px;color:#abb4a7">+</div><h3>Choose a design</h3><p>Select a study from the collection to start comparing.</p><a class="solid-btn" href="#/collection">Browse collection</a></div>`).join('')}</div>${selected.length===2?`<div class="comparison-notes"><div><div class="eyebrow">FIRST IMPRESSION</div><p>${esc(selected[0].tagline)}</p></div><div><div class="eyebrow">ALTERNATE EXPRESSION</div><p>${esc(selected[1].tagline)}</p></div><div><div class="eyebrow">THE CONSTANT</div><p>Five titles, the same five championship seasons and the same shared MI history.</p></div></div>`:''}</section>`;
+    return `<section class="subpage wrap"><div class="eyebrow">YOUR DESIGN WORKSPACE</div><h1 class="subpage-title">Side by side<span style="color:#8c9889">.</span></h1><p class="subpage-intro">The same facts, two different philosophies. Put them next to each other to see what changes — and what doesn't.</p><div class="compare-picks">${[0,1].map(i=>selected[i]?`<article class="compare-card"><div class="compare-caption"><h2>${esc(selected[i].name)}</h2><span>${selected[i].score} / 100</span></div>${art(selected[i])}<div class="compare-foot">${voting.button(selected[i],'detail')}<button class="outline-btn" data-remove-compare="${selected[i].slug}">${svgIcon('close')} Remove</button></div></article>`:`<div class="compare-select"><div style="font-size:45px;color:#abb4a7">+</div><h3>Choose a design</h3><p>Select a study from the collection to start comparing.</p><a class="solid-btn" href="/collection">Browse collection</a></div>`).join('')}</div>${selected.length===2?`<div class="comparison-notes"><div><div class="eyebrow">FIRST IMPRESSION</div><p>${esc(selected[0].tagline)}</p></div><div><div class="eyebrow">ALTERNATE EXPRESSION</div><p>${esc(selected[1].tagline)}</p></div><div><div class="eyebrow">THE CONSTANT</div><p>Five titles, the same five championship seasons and the same shared MI history.</p></div></div>`:''}</section>`;
   }
 
   function render(){
@@ -176,7 +188,7 @@ case 'route': return `${heavy(27,113,'THE ROAD',36,f,'letter-spacing="-1.3"')}${
     window.scrollTo({top:0,behavior:'instant'});
     updateScroll();
   }
-  function notFound(){return `<section class="subpage wrap"><div class="eyebrow">NOT FOUND</div><h1 class="subpage-title">Not this time.</h1><p class="subpage-intro">The study you're looking for doesn't exist.</p><a href="#/" class="solid-btn">Return home</a></section>`}
+  function notFound(){return `<section class="subpage wrap"><div class="eyebrow">NOT FOUND</div><h1 class="subpage-title">Not this time.</h1><p class="subpage-intro">The study you're looking for doesn't exist.</p><a href="/" class="solid-btn">Return home</a></section>`}
 
   function results(){
     const grid=document.getElementById('gallery-results');
@@ -223,18 +235,27 @@ case 'route': return `${heavy(27,113,'THE ROAD',36,f,'letter-spacing="-1.3"')}${
     const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`form-${slug}-mi-study.svg`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1500);toast('SVG artwork downloaded');
   }
   async function share(slug){
-    const url=new URL(location.href);url.hash=`/design/${slug}`;
+    const url=new URL(`/design/${slug}`,location.origin);
     try {await navigator.clipboard.writeText(url.href);toast('Link copied to clipboard');}
     catch {window.prompt('Copy this study link:',url.href);}
   }
   function updateScroll(){const max=document.documentElement.scrollHeight-window.innerHeight;document.documentElement.style.setProperty('--scroll',`${max>0?Math.min(100,window.scrollY/max*100):0}%`)}
 
   app.addEventListener('click',event=>{
+    const link=event.target.closest('a[href^="/"]');
+    if(link && !link.hasAttribute('download') && !event.defaultPrevented && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey && event.button===0 && !link.hasAttribute('target')){
+      const href=link.getAttribute('href');
+      if(href.startsWith('/') && !href.startsWith('//')){
+        event.preventDefault();
+        navigate(link.pathname);
+        return;
+      }
+    }
     const target=event.target.closest('[data-design],[data-save],[data-add-compare],[data-remove-compare],[data-route],[data-filter],[data-rank-mode],[data-clear-compare],[data-clear-filters],[data-focus-search],[data-download],[data-share]');
     if(!target)return;
     const d=target.dataset;
-    if(d.design){location.hash=`/design/${d.design}`;return}
-    if(d.route){location.hash=d.route;return}
+    if(d.design){navigate(`/design/${d.design}`);return}
+    if(d.route){navigate(d.route);return}
     if(d.save){toggleSave(d.save);return}
     if(d.addCompare){toggleCompare(d.addCompare);return}
     if(d.removeCompare){toggleCompare(d.removeCompare);return}
@@ -242,7 +263,7 @@ case 'route': return `${heavy(27,113,'THE ROAD',36,f,'letter-spacing="-1.3"')}${
     if('clearFilters' in d){state.query='';state.filter='All';state.sort='rank';render();return}
     if(d.filter){state.filter=d.filter;results();return}
     if(d.rankMode){state.rankMode=d.rankMode;updateRankings();return}
-    if('focusSearch' in d){location.hash='/collection';setTimeout(()=>document.getElementById('design-search')?.focus(),35);return}
+    if('focusSearch' in d){navigate('/collection');setTimeout(()=>document.getElementById('design-search')?.focus(),35);return}
     if(d.download){downloadSvg(d.download);return}
     if(d.share){share(d.share)}
   });
@@ -253,10 +274,10 @@ case 'route': return `${heavy(27,113,'THE ROAD',36,f,'letter-spacing="-1.3"')}${
     if(event.target.id==='sort-select'){state.sort=event.target.value;results();}
   });
   document.addEventListener('keydown',event=>{
-    if(event.key==='/'&&!event.metaKey&&!event.ctrlKey&&!['INPUT','TEXTAREA'].includes(document.activeElement.tagName)){event.preventDefault();location.hash='/collection';setTimeout(()=>document.getElementById('design-search')?.focus(),30)}
+    if(event.key==='/'&&!event.metaKey&&!event.ctrlKey&&!['INPUT','TEXTAREA'].includes(document.activeElement.tagName)){event.preventDefault();navigate('/collection');setTimeout(()=>document.getElementById('design-search')?.focus(),30)}
     if(event.key==='Escape'&&document.activeElement?.id==='design-search'){document.activeElement.blur()}
   });
-  window.addEventListener('hashchange',render);
+  window.addEventListener('popstate',render);
   window.addEventListener('scroll',updateScroll,{passive:true});
   document.addEventListener('form:votes-updated',()=>{updateHeroFeature();if(state.rankMode==='people')updateRankings()});
   document.addEventListener('form:vote-feedback',event=>toast(event.detail.message));
