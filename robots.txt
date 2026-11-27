@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://form-design.in/sitemap.xml

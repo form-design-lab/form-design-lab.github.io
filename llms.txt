@@ -1,0 +1,24 @@
+# FORM — The Design Index
+
+> FORM is an independent interactive design index created by Prakhar Indoria in India. It explores one Mumbai Indians story through 37 distinct brand-inspired design philosophies.
+
+## Creator
+
+- Name: Prakhar Indoria
+- Role: Creator of FORM — The Design Index
+- LinkedIn: https://www.linkedin.com/in/prakharindoria/
+- Website: https://form-design.in/
+
+## Explore
+
+- [Home](https://form-design.in/): Introduction and featured community favourite.
+- [Collection](https://form-design.in/collection/): All 37 visual studies.
+- [Rankings](https://form-design.in/rankings/): Editorial rankings and live People's Choice voting results.
+- [Sitemap](https://form-design.in/sitemap.xml): Canonical URLs for all public studies.
+
+## Notes
+
+- The brand-inspired artwork and rankings are an independent editorial design experiment, not official brand products or endorsements.
+- All studies use the same Mumbai Indians captaincy and championship narrative.
+- Editorial scores are subjective. People's Choice rankings come from anonymous public votes and may change.
+- No account is required to browse the collection.

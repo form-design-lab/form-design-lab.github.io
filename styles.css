@@ -118,7 +118,14 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{ou
 .site-footer{border-top:1px solid #dce0d8;padding:35px 0 50px;margin-top:20px}
 .footer-inner{display:flex;justify-content:space-between;gap:32px;align-items:flex-start}
 .footer-brand{font-size:34px;font-weight:700;letter-spacing:-3px}
-.footer-copy{font-size:13px;color:#858e82;max-width:430px;line-height:1.7}
+.footer-copy{font-size:13px;color:#858e82;max-width:430px;line-height:1.7;margin:0}
+.seo-fallback{min-height:65vh;padding:95px 0 120px;max-width:850px}
+.seo-fallback h1{font-size:clamp(48px,7vw,90px);font-weight:600;letter-spacing:-.07em;line-height:1.08;margin:24px 0}
+.seo-fallback h1 em{font-family:Georgia,serif;font-weight:400}
+.seo-fallback>p:not(.eyebrow){max-width:630px;color:#687167;font-size:18px;line-height:1.75}
+.seo-fallback nav{display:flex;flex-wrap:wrap;gap:24px;margin-top:28px}
+.seo-fallback a{color:#243229;text-decoration:underline;text-underline-offset:5px}
+.seo-study-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(135px,1fr));gap:12px 20px;margin-top:45px;padding-left:18px}
 .footer-end{font-size:12px;text-align:right;color:#929990;line-height:1.8}
 .footer-kicker{font-size:11px;letter-spacing:.09em;font-weight:700;color:#8a9288;margin-bottom:12px}
 .footer-credit,.footer-made{font-size:14px;line-height:1.7;color:#6c756b}
