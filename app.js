@@ -103,11 +103,41 @@
 
   function collectionSection(){return `<section id="collection" class="wrap"><div class="section-head"><div><div class="eyebrow">THE COLLECTION / VOL. 01</div><h2>Explore the index<span style="color:#8e9c87">.</span></h2></div><p>One shared subject, interpreted through 37 distinct visual languages. Browse the work, not the hype.</p></div>${controls()}<div class="collection-summary"><b id="results-count">${filtered().length} design studies</b><span>Subjective editorial ranking</span></div><div class="gallery" id="gallery-results">${cards(filtered())}</div></section>`}
 
-  function home(){
-    const featured=studies[0];
-    return `<section class="hero wrap"><div class="hero-copy"><div class="eyebrow">A CURATED EXPERIMENT IN DESIGN</div><h1>One story.<br><em>37 perspectives.</em></h1><p class="hero-text">What happens when the same story is told through 37 different design philosophies? A living collection of form, feeling and function.</p><div class="hero-actions"><a href="#/collection" class="solid-btn">Explore the collection ${svgIcon('arrow')}</a><a href="#/rankings" class="outline-btn">See the rankings</a></div></div><div class="feature-frame"><div class="feature-top"><span>EDITOR'S PICK / 01</span><strong>97 / 100</strong></div>${art(featured)}<div class="feature-bottom"><strong>Linear</strong><span>Precision without noise.</span></div><div class="feature-pill">Top-rated study</div></div></section><div class="wrap stats-ribbon"><div class="stats-left"><div class="metric"><strong>37</strong><span>design languages</span></div><div class="metric"><strong>01</strong><span>shared narrative</span></div><div class="metric"><strong>∞</strong><span>ways to see</span></div></div><div class="stats-caption">A side-by-side exploration of the decisions that make design feel different.</div></div>${collectionSection()}<section class="interlude"><div class="wrap interlude-inner"><div><div class="eyebrow">WHAT STAYS THE SAME</div><p>Mumbai Indians. Nineteen IPL seasons. Five championships. One story that every design interprets differently.</p></div><h2>Same facts.<br><em>Different feeling.</em></h2></div></section>`;
+  function featuredChoice(){
+    // Use the exact same tie-break as the People's Choice ranking page.
+    // With no votes yet, show the editorial favourite without implying a community winner.
+    const community=voting.totalVotes>0;
+    return {design:community?voting.sortCommunity(studies)[0]:studies[0],community};
   }
 
+  function featuredVotes(design){
+    const count=voting.count(design.slug);
+    return `${count.toLocaleString('en-US')} ${count===1?'vote':'votes'}`;
+  }
+
+  function featuredMarkup(){
+    const {design,community}=featuredChoice();
+    const key=`${community?'people':'editorial'}:${design.slug}`;
+    return `<div class="feature-frame" id="hero-feature" data-feature-key="${key}"><div class="feature-top"><span>${community?"PEOPLE'S CHOICE / 01":"EDITOR'S PICK / 01"}</span><strong>${community?featuredVotes(design):`${design.score} / 100`}</strong></div>${art(design)}<div class="feature-bottom"><strong>${esc(design.name)}</strong><span>${esc(design.tagline)}</span></div><div class="feature-pill">${community?'Community favourite':'Top-rated study'}</div></div>`;
+  }
+
+  function updateHeroFeature(){
+    const frame=document.getElementById('hero-feature');
+    if(!frame)return;
+    const {design,community}=featuredChoice();
+    const key=`${community?'people':'editorial'}:${design.slug}`;
+    if(frame.dataset.featureKey!==key){
+      frame.outerHTML=featuredMarkup();
+    }else if(community){
+      // Keep the artwork stable when only the vote count changes.
+      const count=frame.querySelector('.feature-top strong');
+      if(count)count.textContent=featuredVotes(design);
+    }
+  }
+
+  function home(){
+    return `<section class="hero wrap"><div class="hero-copy"><div class="eyebrow">A CURATED EXPERIMENT IN DESIGN</div><h1>One story.<br><em>37 perspectives.</em></h1><p class="hero-text">What happens when the same story is told through 37 different design philosophies? A living collection of form, feeling and function.</p><div class="hero-actions"><a href="#/collection" class="solid-btn">Explore the collection ${svgIcon('arrow')}</a><a href="#/rankings" class="outline-btn">See the rankings</a></div></div>${featuredMarkup()}</section><div class="wrap stats-ribbon"><div class="stats-left"><div class="metric"><strong>37</strong><span>design languages</span></div><div class="metric"><strong>01</strong><span>shared narrative</span></div><div class="metric"><strong>∞</strong><span>ways to see</span></div></div><div class="stats-caption">A side-by-side exploration of the decisions that make design feel different.</div></div>${collectionSection()}<section class="interlude"><div class="wrap interlude-inner"><div><div class="eyebrow">WHAT STAYS THE SAME</div><p>Mumbai Indians. Nineteen IPL seasons. Five championships. One story that every design interprets differently.</p></div><h2>Same facts.<br><em>Different feeling.</em></h2></div></section>`;
+  }
   function collectionPage(savedOnly=false){
     if(savedOnly){ const saved=studies.filter(d=>state.saved.has(d.slug));return `<div class="subpage wrap"><div class="eyebrow">YOUR PERSONAL SELECTION</div><h1 class="subpage-title">Worth keeping<span style="color:#84917d">.</span></h1><p class="subpage-intro">Designs you have bookmarked, saved locally on this browser. Your collection stays with you when you return.</p><div class="gallery">${saved.length?cards(saved):`<div class="empty-state"><div class="empty-glyph">♡</div><h3>Your collection starts here.</h3><p>Save any design you love and it will appear here.</p><a class="solid-btn" href="#/collection">Explore designs</a></div>`}</div></div>`}
     return `<div class="subpage wrap" style="padding-bottom:0"><div class="eyebrow">THE DESIGN INDEX</div><h1 class="subpage-title">The collection<span style="color:#84917d">.</span></h1><p class="subpage-intro">Thirty-seven perspectives on one shared story. Find a favourite, discover a new visual language, or compare two side by side.</p></div>${collectionSection()}`;
@@ -228,7 +258,7 @@
   });
   window.addEventListener('hashchange',render);
   window.addEventListener('scroll',updateScroll,{passive:true});
-  document.addEventListener('form:votes-updated',()=>{if(state.rankMode==='people')updateRankings()});
+  document.addEventListener('form:votes-updated',()=>{updateHeroFeature();if(state.rankMode==='people')updateRankings()});
   document.addEventListener('form:vote-feedback',event=>toast(event.detail.message));
   render();
   voting.init();
